@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>angular-i18n-editor</title>
+    <script src="https://cdn.bootcss.com/jquery/2.2.4/jquery.min.js"></script>
+    <style>
+        *,
+        textarea,
+        input {
+            padding: 0;
+            margin: 0;
+        }
+
+        body {
+            padding: 10px;
+            font-size: 12px;
+        }
+
+        textarea,
+        input {
+            font-size: 12px;
+            width: 100%;
+            max-height: 60px;
+            min-height: 18px;
+        }
+
+        table {
+            border-collapse: collapse;
+        }
+
+        table tr:hover {
+            background: #E0E8CB
+        }
+
+        table th {
+            background: #F0EDD6
+        }
+
+        table td,
+        table th {
+            border: 1px solid #eee;
+            text-align: left;
+        }
+    </style>
+    <script>
+        var curlang = 'en', languages = [];
+        $(function () {
+            onChangeLang(curlang);
+        });
+        function onChangeLang(_lang) {
+            curlang = _lang;
+            $('#inputs').empty();
+            $.getJSON('/langs?lang=' + curlang, function (res) {
+                appendSelect(res.languages);
+                appendTable(res.baseData, res.langData ? res.langData : []);
+            });
+        }
+        function appendSelect(languages) {
+            var select = $('#changeLang').empty();
+            if (languages) for (var lang in languages) {
+                select.append('<option ' + (curlang == languages[lang] ? 'selected' : '') + '>' + languages[lang] + '</option>');
+            }
+        }
+        function appendTable(defaultData, langData) {
+            var inputs = $('#inputs').empty();
+            inputs.append('<tr><th width="12%">关键词</th><th>基础翻译</th><th width="60%">' + curlang + '</th></tr>');
+            if (defaultData) for (var g in defaultData) {
+                if (typeof (defaultData[g]) == 'object') {
+                    var color = getColor();
+                    for (var o in defaultData[g]) {
+                        var key = g + '.' + o;
+                        var val = langData[g] && langData[g][o] ? langData[g][o] : '';
+                        var str = '<tr><td><b style="color:' + color + '">' + g + '</b>.' + o + '</td>';
+                        str += '<td>' + defaultData[g][o] + '</td>';
+                        str += '<td><input type="text" onblur="saveLang(\'' + key + '\',this.value)" name="' + key + '" value="' + val + '"></td>';
+                        str += '</tr>';
+                        inputs.append(str);
+                    }
+                } else {
+                    var val = langData[g] ? langData[g] : '';
+                    var str = '<tr><td>' + g + '</td>';
+                    str += '<td>' + defaultData[g] + '</td>';
+                    str += '<td><input type="text" onblur="saveLang(\'' + g + '\',this.value)" name="' + g + '" value="' + val + '"></td>';
+                    str += '</tr>';
+                    inputs.append(str);
+                }
+            }
+        }
+        function saveLang(_key, _val) {
+            $.post('/langs', { lang: curlang, key: _key, val: _val }, function (res) {
+                if (res == '1') {
+                } else if (res == '2') {
+                    alert(_key + ' 保存失败了，' + curlang + '语言文件可能不存在！');
+                } else {
+                    alert(_key + ' 保存失败了，请稍后再试！');
+                }
+            });
+        }
+        function getColor() {
+            this.r = Math.floor(Math.random() * 255);
+            this.g = Math.floor(Math.random() * 255);
+            this.b = Math.floor(Math.random() * 255);
+            return 'rgba(' + this.r + ',' + this.g + ',' + this.b + ',0.8)';
+        }
+    </script>
+</head>
+
+<body>
+    <div
+        style="position: fixed;top:0px;left:0px;background:#67A729;padding:5px 10px;width:100%;font-size:14px;color:#fff">
+        切换语言：<select id="changeLang" onchange="onChangeLang(this.value)">
+            <option value="">-元-</option>
+        </select>
+        <span style="font-size:12px">(输入后鼠标点击其他地方即可自动保存！)</span>
+    </div>
+    <table id="inputs" style="width: 100%;margin-top:30px;">
+    </table>
+</body>
+
+</html>
