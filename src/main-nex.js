@@ -19,8 +19,8 @@ var server = http.createServer(app);
 //         console.log('close');
 //     })
 // });
-
-var langPath = './i18n/';
+ 
+var langPath = './i18n-nex/';
 var baseLang = 'zh';
 
 
