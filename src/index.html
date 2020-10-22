@@ -6,11 +6,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>angular-i18n-editor</title>
     <script src="https://cdn.bootcss.com/jquery/2.2.4/jquery.min.js"></script>
+    <script src="https://cdn.bootcss.com/blueimp-md5/2.10.0/js/md5.js"></script>
     <style>
         *,
         textarea,
         input {
-            padding: 0;
+            padding: 0px;
             margin: 0;
         }
 
@@ -22,9 +23,6 @@
         textarea,
         input {
             font-size: 12px;
-            width: 100%;
-            max-height: 60px;
-            min-height: 18px;
         }
 
         table {
@@ -44,6 +42,10 @@
             border: 1px solid #eee;
             text-align: left;
         }
+        table textarea,table input {
+            width: 100%;
+            padding: 2px;
+        }
     </style>
     <script>
         var curlang = 'en', languages = [];
@@ -51,7 +53,7 @@
             onChangeLang(curlang);
         });
         function onChangeLang(_lang) {
-            curlang = _lang;
+            curlang = _lang.replace('.json', '');
             $('#inputs').empty();
             $.getJSON('/langs?lang=' + curlang, function (res) {
                 appendSelect(res.languages);
@@ -61,6 +63,7 @@
         function appendSelect(languages) {
             var select = $('#changeLang').empty();
             if (languages) for (var lang in languages) {
+                languages[lang] = languages[lang].replace('.json', '');
                 select.append('<option ' + (curlang == languages[lang] ? 'selected' : '') + '>' + languages[lang] + '</option>');
             }
         }
@@ -72,18 +75,20 @@
                     var color = getColor();
                     for (var o in defaultData[g]) {
                         var key = g + '.' + o;
-                        var val = langData[g] && langData[g][o] ? langData[g][o] : '';
+                        var val = langData[g] && langData[g][o] ? langData[g][o].replace('"','\\"') : '';
                         var str = '<tr><td><b style="color:' + color + '">' + g + '</b>.' + o + '</td>';
-                        str += '<td>' + defaultData[g][o] + '</td>';
-                        str += '<td><input type="text" onblur="saveLang(\'' + key + '\',this.value)" name="' + key + '" value="' + val + '"></td>';
+                        var zhstr = defaultData[g][o];
+                        str += '<td>' + zhstr + '</td>';
+                        str += '<td><input type="text" onblur="saveLang(\'' + key + '\',this.value)" onclick="trans(this,\'' + curlang + '\',\'' + zhstr + '\')" name="' + key + '" value="' + val + '"></td>';
                         str += '</tr>';
                         inputs.append(str);
                     }
                 } else {
-                    var val = langData[g] ? langData[g] : '';
+                    var val = langData[g] ? langData[g].replace('"','\\"') : '';
                     var str = '<tr><td>' + g + '</td>';
-                    str += '<td>' + defaultData[g] + '</td>';
-                    str += '<td><input type="text" onblur="saveLang(\'' + g + '\',this.value)" name="' + g + '" value="' + val + '"></td>';
+                    var zhstr = defaultData[g];
+                    str += '<td>' + zhstr + '</td>';
+                    str += '<td><input type="text" onblur="saveLang(\'' + g + '\',this.value)" onclick="trans(this,\'' + curlang + '\',\'' + zhstr + '\')" name="' + g + '" value="' + val + '"></td>';
                     str += '</tr>';
                     inputs.append(str);
                 }
@@ -105,16 +110,46 @@
             this.b = Math.floor(Math.random() * 255);
             return 'rgba(' + this.r + ',' + this.g + ',' + this.b + ',0.8)';
         }
+        function trans(e, to, query) {
+            if(!$('#autoTrans').is(':checked')) return;
+            if ($(e).val() != '') return;
+            var appid = '20200910000563098';
+            var salt = Math.random();//随机码
+            var key = 'g8ODV4QZWCC0qtM0sbEa'; //密钥
+            var sign = md5(appid + query + salt + key);
+            var url = 'http://api.fanyi.baidu.com/api/trans/vip/translate';
+            var supports = { en: 'en', el: 'el', ja: 'jp', es: 'spa', fr: 'fra', zh_hk: 'cht' };
+            if (!supports[to]) return;
+            $.ajax({
+                url: url,
+                type: 'get',
+                dataType: 'jsonp',
+                data: {
+                    q: query,
+                    appid: appid,
+                    salt: salt,
+                    from: 'zh',
+                    to: supports[to],
+                    sign: sign
+                },
+                success: function (res) {
+                    if (res && res.trans_result) {
+                        console.log(res.trans_result);
+                        $(e).val(res.trans_result[0].dst);
+                    }
+                }
+            });
+        }
     </script>
 </head>
 
 <body>
-    <div
-        style="position: fixed;top:0px;left:0px;background:#67A729;padding:5px 10px;width:100%;font-size:14px;color:#fff">
+    <div style="position: fixed;top:0px;left:0px;background:#67A729;padding:5px 10px;width:100%;font-size:14px;color:#fff">
         切换语言：<select id="changeLang" onchange="onChangeLang(this.value)">
             <option value="">-元-</option>
         </select>
-        <span style="font-size:12px">(输入后鼠标点击其他地方即可自动保存！)</span>
+        <label style="padding:5px;color:yellow"><input type="checkbox" id="autoTrans">开启自动翻译</label>
+        <span style="font-size:13px">　(输入后鼠离开点击任意处即可保存，开启自动翻译时点击输入框会自定输入，已填写的框不会自动翻译)</span>
     </div>
     <table id="inputs" style="width: 100%;margin-top:30px;">
     </table>
