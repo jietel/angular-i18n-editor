@@ -19,12 +19,12 @@ var server = http.createServer(app);
 //         console.log('close');
 //     })
 // });
-
+ 
 var langPath = './i18n/';
 var baseLang = 'zh';
 
 
-server.listen(8106, function listening() {
+server.listen(8110, function listening() {
     let host = server.address().address;
     let port = server.address().port;
     console.log("start server ==> http://%s:%s\n", host, port);
@@ -38,7 +38,7 @@ server.listen(8106, function listening() {
 
 app.get('/index', (req, res) => {
     console.log(req.baseUrl, req.originalUrl, req.query);
-    res.send("Hello angular-i18n-editor");
+    res.send("Hello nexcloud-i18n-editor");
 });
 app.get('/langs', (req, res) => {
     console.log('\n' + req.method, req.baseUrl, req.originalUrl, req.query);

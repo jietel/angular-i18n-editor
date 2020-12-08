@@ -1,11 +1,10 @@
 {
-  "name": "angular-i18n-editor",
-  "version": "1.0.1",
+  "name": "nexcloud-i18n-editor",
+  "version": "1.1.0",
   "description": "",
   "main": "./src/main.js",
   "scripts": {
     "start": "node ./src/main.js",
-    "start-nex": "node ./src/main-nex.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
