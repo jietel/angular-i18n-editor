@@ -7,6 +7,7 @@
     <title>angular-i18n-editor</title>
     <script src="https://cdn.bootcss.com/jquery/2.2.4/jquery.min.js"></script>
     <script src="https://cdn.bootcss.com/blueimp-md5/2.10.0/js/md5.js"></script>
+    <script lang="javascript" src="./xlsx.core.min.js"></script>
     <style>
         *,
         textarea,
@@ -42,13 +43,15 @@
             border: 1px solid #eee;
             text-align: left;
         }
-        table textarea,table input {
+
+        table textarea,
+        table input {
             width: 100%;
             padding: 2px;
         }
     </style>
     <script>
-        var curlang = 'en', languages = [];
+        var curlang = 'en', languages = [], jsonData = {};
         $(function () {
             onChangeLang(curlang);
         });
@@ -56,6 +59,7 @@
             curlang = _lang.replace('.json', '');
             $('#inputs').empty();
             $.getJSON('/langs?lang=' + curlang, function (res) {
+                jsonData = res;
                 appendSelect(res.languages);
                 appendTable(res.baseData, res.langData ? res.langData : []);
             });
@@ -75,7 +79,7 @@
                     var color = getColor();
                     for (var o in defaultData[g]) {
                         var key = g + '.' + o;
-                        var val = langData[g] && langData[g][o] ? langData[g][o].replace('"','\\"') : '';
+                        var val = langData[g] && langData[g][o] ? langData[g][o].replace('"', '\\"') : '';
                         var str = '<tr><td><b style="color:' + color + '">' + g + '</b>.' + o + '</td>';
                         var zhstr = defaultData[g][o];
                         str += '<td>' + zhstr + '</td>';
@@ -84,7 +88,7 @@
                         inputs.append(str);
                     }
                 } else {
-                    var val = langData[g] ? langData[g].replace('"','\\"') : '';
+                    var val = langData[g] ? langData[g].replace('"', '\\"') : '';
                     var str = '<tr><td>' + g + '</td>';
                     var zhstr = defaultData[g];
                     str += '<td>' + zhstr + '</td>';
@@ -111,7 +115,7 @@
             return 'rgba(' + this.r + ',' + this.g + ',' + this.b + ',0.8)';
         }
         function trans(e, to, query) {
-            if(!$('#autoTrans').is(':checked')) return;
+            if (!$('#autoTrans').is(':checked')) return;
             if ($(e).val() != '') return;
             var appid = '20200910000563098';
             var salt = Math.random();//随机码
@@ -140,16 +144,53 @@
                 }
             });
         }
+        function exportXls(not) {
+            const exportArr = [];
+            for (var g in jsonData.baseData) {
+                if (typeof (jsonData.baseData[g]) == 'object') {
+                    for (var o in jsonData.baseData[g]) {
+                        if (not && jsonData.langData[g][o]) {
+                            continue;
+                        }
+                        exportArr.push({
+                            key: g + '.' + o,
+                            zh: jsonData.baseData[g][o],
+                            val: jsonData.langData[g][o]
+                        });
+                    }
+                } else {
+                    if (not && jsonData.langData[g]) {
+                        continue;
+                    }
+                    exportArr.push({
+                        key: g,
+                        zh: jsonData.baseData[g],
+                        val: jsonData.langData[g]
+                    });
+                }
+            }
+            //header
+            const Header = [['key', 'zh', curlang]];
+            const headerWs = XLSX.utils.aoa_to_sheet(Header);
+            const ws = XLSX.utils.sheet_add_json(headerWs, exportArr, { skipHeader: true, origin: "A2" });
+            ws['!cols'] = [{ wch: 30 }, { wch: 50 }, { wch: 60 }];
+            const wb = XLSX.utils.book_new();//新建空workbook然后加入worksheet
+            XLSX.utils.book_append_sheet(wb, ws, 'sheet-' + curlang);
+            XLSX.writeFile(wb, 'nexcloud-' + curlang + '.xlsx');
+        }
     </script>
 </head>
 
 <body>
-    <div style="position: fixed;top:0px;left:0px;background:#67A729;padding:5px 10px;width:100%;font-size:14px;color:#fff">
+    <div
+        style="position: fixed;top:0px;left:0px;background:#67A729;padding:5px 10px;width:100%;font-size:14px;color:#fff">
         切换语言：<select id="changeLang" onchange="onChangeLang(this.value)">
             <option value="">-元-</option>
         </select>
         <label style="padding:5px;color:yellow"><input type="checkbox" id="autoTrans">开启自动翻译</label>
         <span style="font-size:13px">　(输入后鼠离开点击任意处即可保存，开启自动翻译时点击输入框会自定输入，已填写的框不会自动翻译)</span>
+        <a href="javascript:exportXls(0);">(导出全部)</a>
+        <a href="javascript:exportXls(1);">(导出未翻译)</a>
     </div>
     <table id="inputs" style="width: 100%;margin-top:30px;">
     </table>
