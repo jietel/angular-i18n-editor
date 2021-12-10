@@ -12,7 +12,7 @@ Manage i18n translation of angular with web visualization
 1. 克隆代码命令行进入angular-i18n-editor目录
 2. 执行npm install
 3. 输入npm run start
-4. 浏览器访问localhost:8106即可输入多国语言翻译
+4. 浏览器访问localhost:8110即可输入多国语言翻译
 
 #### 注意事项
 
@@ -23,6 +23,7 @@ var langPath = './i18n/';
 var baseLang = 'zh';
 ```
 2. 将需要翻译的主语言文件，比如zh.json复制到./i18n/目录下，然后建立各国语言相应的json文件即可在页面中刷新输入。
+3. 要使用自动翻译可以去https://api.fanyi.baidu.com/添加活的appid和key填写在src/index.html页面里
 
 #### 参与贡献
 

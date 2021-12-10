@@ -22,9 +22,10 @@ var server = http.createServer(app);
  
 var langPath = './i18n/';
 var baseLang = 'zh';
+var servPort = 8110;
 
 
-server.listen(8110, function listening() {
+server.listen(servPort, function listening() {
     let host = server.address().address;
     let port = server.address().port;
     console.log("start server ==> http://%s:%s\n", host, port);

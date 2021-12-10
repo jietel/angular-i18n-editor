@@ -51,6 +51,8 @@
         }
     </style>
     <script>
+        var baiduAppid = '20200910000563098';
+        var baiduFanyiKey = 'g8ODV4QZWCC0qtM0sbEa';
         var curlang = 'en', languages = [], jsonData = {};
         $(function () {
             onChangeLang(curlang);
@@ -117,10 +119,9 @@
         function trans(e, to, query) {
             if (!$('#autoTrans').is(':checked')) return;
             if ($(e).val() != '') return;
-            var appid = '20200910000563098';
+            if(!baiduAppid||!baiduFanyiKey) return alert('百度翻译的baiduFanyiKey未配置');
             var salt = Math.random();//随机码
-            var key = 'g8ODV4QZWCC0qtM0sbEa'; //密钥
-            var sign = md5(appid + query + salt + key);
+            var sign = md5(baiduAppid + query + salt + baiduFanyiKey);
             var url = 'http://api.fanyi.baidu.com/api/trans/vip/translate';
             var supports = { en: 'en', el: 'el', ja: 'jp', es: 'spa', fr: 'fra', zh_hk: 'cht' };
             if (!supports[to]) return;
@@ -130,7 +131,7 @@
                 dataType: 'jsonp',
                 data: {
                     q: query,
-                    appid: appid,
+                    appid: baiduAppid,
                     salt: salt,
                     from: 'zh',
                     to: supports[to],
